@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+/* Custom Gemini Button Pulse Animation */
+@keyframes gemini-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.5); /* Blue glow starts */
+  }
+  50% {
+    transform: scale(1.08); /* Enlarges */
+    box-shadow: 0 0 20px 10px rgba(37, 99, 235, 0); /* Glow fades out */
+  }
+  100% {
+    transform: scale(1); /* Shrinks back to normal */
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+  }
+}
+
+.animate-gemini-pulse {
+  animation: gemini-pulse 2s infinite ease-in-out;
+}
