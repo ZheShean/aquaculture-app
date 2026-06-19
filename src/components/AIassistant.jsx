@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'; // 1. Imported useRef and useEffect
+import React, { useState, useRef, useEffect } from 'react'; 
 import { getGenerativeModel } from "firebase/ai";
 import { aiLogic } from '../firebase'; 
 
@@ -10,43 +10,81 @@ export default function AIassistant({ temp, ph, ec }) {
   const [userInput, setUserInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // 2. Created a reference to track the bottom of the chat container
   const messagesEndRef = useRef(null);
 
-  // 3. Function that forces the scroll window down smoothly
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // 4. Automatically trigger the scroll whenever chat content changes or modal opens
   useEffect(() => {
     scrollToBottom();
   }, [chatHistory, isLoading, isOpen]);
 
-  // System Instructions (The Guardrails)
-  const model = getGenerativeModel(aiLogic, { 
-    model: "gemini-3.5-flash",
-    systemInstruction: `You are an expert aquaculture assistant for a tilapia farmer. 
-    RULE 1: You must ONLY answer questions related to pond health, water quality monitoring, and solutions for sub-optimal conditions. 
-    RULE 2: If the user asks about ANYTHING else, you must reply exactly with: "I'm sorry, that is outside my scope. I can only assist with questions regarding your tilapia pond health and water quality."
-    RULE 3: Keep all valid answers short, practical, and highly actionable. Maximum 3 sentences.`
-  });
-
-  // Suggested Questions
-  const suggestedQuestions = [
+  // NEW: State to track which follow-up set to display
+  const [currentQuestions, setCurrentQuestions] = useState([
     "What is the overall condition for my fish pond with the metrics measured?",
     "How are the metrics value going to affect my Tilapia fish health?",
     "What is my fish pond condition now and what is the solution need to take?",
     "What is the Non-ionised toxic Ammonia level fraction (NH3) of my pond according to the metrics, and what is the effect?"
-  ];
+  ]);
 
-  const sendPrompt = async (textToSubmit) => {
+  // UPDATED SYSTEM INSTRUCTION: Explicitly forcing emoji, point forms, and bolding key phrases
+  const model = getGenerativeModel(aiLogic, { 
+    model: "gemini-3.5-flash",
+    systemInstruction: `You are an expert, highly encouraging aquaculture assistant for a tilapia farmer in Malaysia. 
+    RULE 1: You must ONLY answer questions related to pond health, water quality monitoring, practical solutions, and Malaysian hardware sourcing.
+    RULE 2: CRITICAL FORMATTING RULE: You must NEVER write answers in long paragraph essays. You MUST always use distinct bullet points, insert engaging emojis at the start of key points to catch attention, and use double asterisks (**important phrase**) to bold highly critical numbers or action items so the farmer can scan information instantly.
+    RULE 3: Keep explanations practical, easy to understand, and limited to a maximum of 3-4 bullet points.`
+  });
+
+  // NEW: Dictionary defining unique follow-up questions for each specific action choice
+  const followUpMap = {
+    0: [
+      "📈 What sensor thresholds indicate excellent water quality?",
+      "🔄 How frequently should I take manual readings to double-check my sensors?",
+      "🛑 What is the first warning sign that pond conditions are crashing?",
+      "🛍️ Where can I buy a reliable secondary liquid test kit in Malaysia?"
+    ],
+    1: [
+      "🐟 What behavior shows that Tilapia are suffering from low oxygen?",
+      "🌡️ Can high temperatures cause my Tilapia to stop feeding entirely?",
+      "🛡️ How can I boost fish immunity when water conditions are sub-optimal?",
+      "🛒 Where can I get premium high-protein Tilapia feed online via Shopee?"
+    ],
+    2: [
+      "⚙️ How long should I run my aerator pump if oxygen drops?",
+      "🚰 What percentage of a water change is safe for Tilapia during an emergency?",
+      "🌿 Are there natural ways to stabilize the pH of my pond water safely?",
+      "🏪 Where can I find affordable water pumps or aeration tubing in Johor?"
+    ],
+    3: [
+      "🧪 Do you want to know where to buy ammonia detoxifying treatments online?",
+      "👀 Do you want to know how to observe your fish for signs of ammonia burning?",
+      "📉 How does lowering my pond water pH reduce toxic NH₃ instantly?",
+      "⚠️ At what exact percentage level does toxic ammonia become lethal to fry?"
+    ]
+  };
+
+const sendPrompt = async (textToSubmit, indexClicked = null) => {
     if (!textToSubmit.trim()) return;
 
     const newChat = [...chatHistory, { role: 'user', text: textToSubmit }];
     setChatHistory(newChat);
     setUserInput("");
     setIsLoading(true);
+
+    // NEW: If the user clicked a structured option, immediately swap in its custom follow-ups
+    if (indexClicked !== null && followUpMap[indexClicked]) {
+      setCurrentQuestions(followUpMap[indexClicked]);
+    } else if (indexClicked !== null) {
+      // Fallback: If they clicked a follow-up, reset or shift to another logical branch
+      setCurrentQuestions([
+        "What is the overall condition for my fish pond with the metrics measured?",
+        "How are the metrics value going to affect my Tilapia fish health?",
+        "What is my fish pond condition now and what is the solution need to take?",
+        "What is the Non-ionised toxic Ammonia level fraction (NH3) of my pond according to the metrics, and what is the effect?"
+      ]);
+    }
 
     try {
       const chat = model.startChat();
@@ -63,9 +101,6 @@ export default function AIassistant({ temp, ph, ec }) {
     } catch (error) {
       console.error("AI Error:", error);
       let userMessage = "Sorry, I am having trouble connecting to the network right now.";
-      if (error.message?.includes("429") || error.message?.includes("credits are depleted")) {
-        userMessage = "The AI service is currently unavailable due to billing limits. Please check back later.";
-      }
       setChatHistory([...newChat, { role: 'model', text: userMessage }]);
     } finally {
       setIsLoading(false);
@@ -74,7 +109,42 @@ export default function AIassistant({ temp, ph, ec }) {
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
-    sendPrompt(userInput);
+    sendPrompt(userInput, 99);
+  };
+
+const renderFormattedText = (text) => {
+    let cleanText = text
+      .replace(/\$?NH_3\$?/g, 'NH₃')
+      .replace(/\$?NH_4\^\+\$?|\$?NH_4\+\$?/g, 'NH₄⁺');
+
+    // Split rows to check if AI responded in bullet point blocks
+    const lines = cleanText.split('\n');
+    return lines.map((line, lineIdx) => {
+      let content = line;
+      let isBullet = false;
+      
+      if (line.trim().startsWith('*') || line.trim().startsWith('-')) {
+        content = line.replace(/^[\s*-]+/, '');
+        isBullet = true;
+      }
+
+      const parts = content.split(/(\*\*.*?\*\*)/g);
+      const parsedElements = parts.map((part, i) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          return <strong key={i} className="font-bold text-slate-900">{part.slice(2, -2)}</strong>;
+        }
+        return part;
+      });
+
+      return isBullet ? (
+        <div key={lineIdx} className="flex items-start gap-2 ml-2 my-1">
+          <span className="text-blue-500 mt-1 shrink-0">•</span>
+          <span>{parsedElements}</span>
+        </div>
+      ) : (
+        <p key={lineIdx} className="my-0.5">{parsedElements}</p>
+      );
+    });
   };
 
   return (
@@ -110,35 +180,39 @@ export default function AIassistant({ temp, ph, ec }) {
               </button>
             </div>
 
-            {/* Chat History & Suggested Questions */}
+            {/* Chat History & Action Options */}
             <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-white scrollbar-thin">
               
-              {/* Render actual chat messages */}
+              {/* Render chat messages using formatting function */}
               {chatHistory.map((msg, index) => (
                 <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] p-3 rounded-2xl text-sm ${
+                  <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed ${
                     msg.role === 'user' 
                       ? 'bg-blue-600 text-white rounded-br-none' 
                       : 'bg-slate-100 text-slate-700 rounded-bl-none border border-slate-200'
                   }`}>
-                    {msg.text}
+                    {renderFormattedText(msg.text)}
                   </div>
                 </div>
               ))}
 
-              {/* Show suggested questions if chat is empty */}
-              {chatHistory.length === 1 && !isLoading && (
-                <div className="flex flex-col gap-2 mt-2 ml-2">
-                  <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">Suggested Questions</p>
-                  {suggestedQuestions.map((question, index) => (
-                    <button
-                      key={index}
-                      onClick={() => sendPrompt(question)}
-                      className="text-left text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 rounded-xl p-3 transition-colors shadow-sm"
-                    >
-                      {question}
-                    </button>
-                  ))}
+              {/* 3. MODIFIED: Suggested questions now remain visible at the bottom as continuous follow-up choices when not loading */}
+              {!isLoading && (
+                  <div className="flex flex-col gap-2 mt-4 pt-2 border-t border-dashed border-slate-100">
+                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider ml-1 mb-1">
+                    Follow-up Options
+                  </p>
+                  <div className="flex flex-col gap-1.5">
+                    {currentQuestions.map((question, index) => (
+                      <button
+                        key={index}
+                        onClick={() => sendPrompt(question, index)}
+                        className="text-left text-xs bg-blue-50/60 text-blue-700 hover:bg-blue-100/80 border border-blue-100/60 rounded-xl p-2.5 transition-colors font-medium shadow-sm"
+                      >
+                        {question}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -150,7 +224,6 @@ export default function AIassistant({ temp, ph, ec }) {
                 </div>
               )}
 
-              {/* 5. HIDDEN SCROLL ANCHOR - The window will automatically snap to this point */}
               <div ref={messagesEndRef} />
             </div>
 

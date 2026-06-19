@@ -20,9 +20,9 @@ export default function AIWaterQuality() {
   });
 
   // --- EXACT SCALING VALUES ---
-  const TEMP_MEAN = 27.57451333333331; const TEMP_STD = 5.197613961856821;
-  const PH_MEAN = 7.543219999999993;   const PH_STD = 1.5417593299863648;
-  const EC_MEAN = 653.8044600000005;   const EC_STD = 1031.456796911974;
+  const TEMP_MEAN = 27.4365; const TEMP_STD = 5.1919;
+  const PH_MEAN = 7.5560;   const PH_STD = 1.5423;
+  const EC_MEAN = 655.7557;   const EC_STD = 1024.7694;
 
   // 1. Load the AI Model
   useEffect(() => {
@@ -53,33 +53,51 @@ export default function AIWaterQuality() {
         const latestDoc = querySnapshot.docs[0];
         const data = latestDoc.data();
         
-        if(data.temperature !== undefined && data.pH !== undefined && data.EC !== undefined) {
-          
-          // Capture the exact numbers from Firestore before scaling
-          setRawValues({ temp: data.temperature, ph: data.pH, ec: data.EC });
-          
-          const tempScaled = (data.temperature - TEMP_MEAN) / TEMP_STD;
-          const phScaled = (data.pH - PH_MEAN) / PH_STD;
-          const ecInMicroSiemens = data.EC * 1000;
-          const ecScaled = (ecInMicroSiemens - EC_MEAN) / EC_STD;
+        // ... inside your onSnapshot listener ...
 
-          const inputTensor = tf.tensor2d([[tempScaled, phScaled, ecScaled]]);
-          const outputTensor = model.predict(inputTensor);
-          const outputArray = outputTensor.dataSync();
-          const predictionClass = outputArray.indexOf(Math.max(...outputArray));
+  if (data.temperature !== undefined && data.pH !== undefined && data.EC !== undefined) {
+  
+    // 1. Extract raw values (Firestore holds EC in mS/cm)
+    const tempVal = Number(data.temperature);
+    const phVal = Number(data.pH);
+    const ecValInMS = Number(data.EC); // Already in mS/cm from your hardware
 
-          const statusMap = {
-            0: { text: "Normal : Good water quality condition", color: "text-emerald-700", bg: "bg-emerald-50" },
-            1: { text: "Caution : Slight degradation", color: "text-yellow-700", bg: "bg-yellow-50" },
-            2: { text: "Warning : Moderate degradation", color: "text-orange-700", bg: "bg-orange-50" },
-            3: { text: "Severe : High degradation", color: "text-red-700", bg: "bg-red-50" }
-          };
-          
-          setWaterGrade(statusMap[predictionClass] || { text: "Unknown State", color: "text-slate-500", bg: "bg-slate-50" });
-          
-          inputTensor.dispose();
-          outputTensor.dispose();
-        }
+    // 2. Prepare the values for the AI Model
+    // The AI needs uS/cm! Multiply by 1000 so the math matches your training data.
+    const tempScaled = (tempVal - TEMP_MEAN) / TEMP_STD;
+    const phScaled = (phVal - PH_MEAN) / PH_STD;
+    const ecInMicroSiemens = ecValInMS * 1000; 
+    const ecScaled = (ecInMicroSiemens - EC_MEAN) / EC_STD;
+
+    // --- AI PREDICTION LOGIC ---
+    const inputTensor = tf.tensor2d([[tempScaled, phScaled, ecScaled]]);
+    const outputTensor = model.predict(inputTensor);
+  
+    const predictionClassTensor = outputTensor.argMax(1);
+    const predictionClass = predictionClassTensor.dataSync()[0];
+
+    const statusMap = {
+      0: { text: "Caution : Slightly degradation", color: "text-yellow-700", bg: "bg-yellow-50" },
+      1: { text: "Normal : Optimal water quality condition", color: "text-emerald-700", bg: "bg-emerald-50" },
+      2: { text: "Severe : High degradation", color: "text-red-700", bg: "bg-red-50" },
+      3: { text: "Warning : Moderate degradation", color: "text-orange-700", bg: "bg-orange-50" }
+    };
+  
+    setWaterGrade(statusMap[predictionClass] || { text: "Unknown State", color: "text-slate-500", bg: "bg-slate-50" });
+  
+    // Clean up browser memory
+    inputTensor.dispose();
+    outputTensor.dispose();
+    predictionClassTensor.dispose(); 
+  
+    // 3. Prepare the values for the Dashboard Display / Gemini Prompt
+    // Since Firestore already gave us mS/cm, pass it directly to the UI without dividing!
+    setRawValues({ 
+        temp: tempVal, 
+        ph: phVal, 
+        ec: ecValInMS 
+    });
+  }
       }
     });
 
@@ -88,7 +106,7 @@ export default function AIWaterQuality() {
 
   return (
     <div className="bg-white rounded-2xl p-5 shadow-sm min-h-[120px] flex flex-col justify-center">
-      <h2 className="text-slate-500 font-medium text-sm mb-3">AI Water Quality Grade</h2>
+      <h2 className="text-slate-500 font-medium text-sm mb-3">Current Water Quality Grade</h2>
       
       {/* 3. FLEX CONTAINER to align the grade and button horizontally */}
       <div className="flex items-center justify-between gap-4">

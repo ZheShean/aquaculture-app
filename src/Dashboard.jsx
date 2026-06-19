@@ -25,10 +25,7 @@ export default function Dashboard() {
 
         {/* Row 6: System Status */}
         <SystemStatus />
-
-        {/* Row 7: Fish Activity */}
-        <FishActivity />
-
+        
     </div>
   );
 }
