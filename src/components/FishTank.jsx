@@ -91,7 +91,7 @@ export default function FishTank() {
         <div className="absolute inset-0 flex items-center justify-between px-10 pointer-events-none z-10">
             
             {/* Left Box: Logo & C1G12 */}
-            <div className="flex flex-col items-start mt-4 select-none">
+            <div className="flex flex-col items-start mt-0 select-none">
                 <div 
                   onClick={() => window.location.reload()}
                   className="relative cursor-pointer pointer-events-auto group active:scale-95 transition-transform"
@@ -106,12 +106,12 @@ export default function FishTank() {
             </div>
 
             {/* Center Box: Date and Time */}
-            <div className="text-slate-500 font-medium text-lg pt-4 tracking-wide">
+            <div className="text-slate-500 font-medium text-lg pt-9 tracking-wide">
                 {currentTime}
             </div>
 
             {/* Right Box: Empty space */}
-            <div className="w-32"></div>
+            <div className="w-2"></div>
         </div>
 
     </div>

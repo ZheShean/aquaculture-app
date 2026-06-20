@@ -166,7 +166,7 @@ export default function SensorMetrics() {
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       
       {/* 1. TEMPERATURE CARD */}
-      <div className="bg-white rounded-[3rem] p-8 shadow-sm relative overflow-hidden h-[400px] flex flex-col justify-between">
+      <div className="bg-white rounded-[3rem] p-8 shadow-sm relative overflow-hidden h-[500px] flex flex-col justify-between">
         <div className="flex justify-between items-start w-full">
           <img src="/temp-icon.png" alt="Temperature Icon" className="w-14 h-14 object-contain" />
           <div className="flex flex-col items-end gap-1">
@@ -185,13 +185,13 @@ export default function SensorMetrics() {
           </div>
         </div>
 
-        <div className="w-full h-28 mt-2 min-h-[250px]">
+        <div className="w-full h-28 mt-2 min-h-[330px]">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={tempData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
+            <AreaChart data={tempData} margin={{ top: 5, right: 5, left: -33, bottom: 0 }}>
               <XAxis dataKey="time" minTickGap={40} tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} />
-              <YAxis domain={[20, 40]} ticks={[20, 25, 32, 40]} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }} tickLine={false} />
-              <ReferenceArea y1={40} y2={32} fill="#fee2e2" fillOpacity={0.6} />
-              <ReferenceArea y1={25} y2={20} fill="#fee2e2" fillOpacity={0.6} />
+              <YAxis domain={[10, 50]} ticks={[10, 20,25, 30, 40, 50]} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }} tickLine={false} />
+              <ReferenceArea y1={50} y2={30} fill="#fee2e2" fillOpacity={0.6} />
+              <ReferenceArea y1={25} y2={10} fill="#fee2e2" fillOpacity={0.6} />
               <Tooltip trigger="hover" content={<CustomTooltip unit="°C" labelName="Temperature" />} />
               <Area type="monotone" dataKey="temperature" stroke="#f97316" strokeWidth={2} fill="none" connectNulls={false} />
             </AreaChart>
@@ -200,7 +200,7 @@ export default function SensorMetrics() {
       </div>
 
       {/* 2. pH LEVEL CARD */}
-      <div className="bg-white rounded-[3rem] p-8 shadow-sm relative overflow-hidden h-[400px] flex flex-col justify-between">
+      <div className="bg-white rounded-[3rem] p-8 shadow-sm relative overflow-hidden h-[500px] flex flex-col justify-between">
         <div className="flex justify-between items-start w-full">
           <img src="/ph-icon.png" alt="pH Icon" className="w-14 h-14 object-contain" />
           <div className="flex flex-col items-end gap-1">
@@ -216,13 +216,13 @@ export default function SensorMetrics() {
           <span className="text-4xl font-bold text-slate-800">{latestData.pH}</span>
         </div>
 
-        <div className="w-full h-28 mt-2 min-h-[250px]">
+        <div className="w-full h-28 mt-2 min-h-[330px]">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={phData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
+            <AreaChart data={phData} margin={{ top: 5, right: 5, left: -33, bottom: 5 }}>
               <XAxis dataKey="time" minTickGap={40} tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} />
-              <YAxis domain={[5, 10]} ticks={[5, 6.5, 8.5, 10]} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }} tickLine={false} />
-              <ReferenceArea y1={10} y2={8.5} fill="#fee2e2" fillOpacity={0.6} />
-              <ReferenceArea y1={6.5} y2={5} fill="#fee2e2" fillOpacity={0.6} />
+              <YAxis domain={[3, 12]} ticks={[0, 3, 5, 6.5, 8.5, 10, 12]} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }} tickLine={false} />
+              <ReferenceArea y1={12} y2={8.5} fill="#fee2e2" fillOpacity={0.6} />
+              <ReferenceArea y1={6.5} y2={3} fill="#fee2e2" fillOpacity={0.6} />
               <Tooltip trigger="hover" content={<CustomTooltip unit="pH" labelName="pH Level" />} />
               <Area type="monotone" dataKey="pH" stroke="#a855f7" strokeWidth={2} fill="none" connectNulls={false} />
             </AreaChart>
@@ -231,7 +231,7 @@ export default function SensorMetrics() {
       </div>
 
       {/* 3. SALINITY LEVEL CARD */}
-      <div className="bg-white rounded-[3rem] p-8 shadow-sm relative overflow-hidden h-[400px] flex flex-col justify-between">
+      <div className="bg-white rounded-[3rem] p-8 shadow-sm relative overflow-hidden h-[500px] flex flex-col justify-between">
         <div className="flex justify-between items-start w-full">
           <img src="/salinity-icon.png" alt="Salinity Icon" className="w-14 h-14 object-contain" />
           <div className="flex flex-col items-end gap-1">
@@ -250,12 +250,12 @@ export default function SensorMetrics() {
           </div>
         </div>
 
-        <div className="w-full h-40 mt-2 min-h-[250px]">
+        <div className="w-full h-40 mt-2 min-h-[330px]">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={ecData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
+            <AreaChart data={ecData} margin={{ top: 5, right: 5, left: -33, bottom: 0 }}>
               <XAxis dataKey="time" minTickGap={40} tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} />
-              <YAxis domain={[0, 2.5]} ticks={[0, 0.25, 1.25, 2.5]} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }} tickLine={false} />
-              <ReferenceArea y1={2.5} y2={1.5} fill="#fee2e2" fillOpacity={0.6} />
+              <YAxis domain={[0, 12.5]} ticks={[0, 0.25, 1.25, 2.5, 5, 7, 9, 12.5]} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }} tickLine={false} />
+              <ReferenceArea y1={12.5} y2={2.0} fill="#fee2e2" fillOpacity={0.6} />
               <Tooltip trigger="hover" content={<CustomTooltip unit="mS/cm" labelName="Salinity Level" />} />
               <Area type="monotone" dataKey="EC" stroke="#06b6d4" strokeWidth={2} fill="none" connectNulls={false} />
             </AreaChart>
