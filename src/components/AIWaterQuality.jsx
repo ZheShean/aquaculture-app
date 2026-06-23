@@ -123,7 +123,7 @@ export default function AIWaterQuality() {
 
   return (
     <div className="bg-white rounded-[3rem] p-8 shadow-sm min-h-[120px] flex flex-col justify-center">
-      <h2 className="text-slate-900 font-bold text-sm mb-3">Current Fish Farm Water Quality</h2>
+      <h2 className="text-slate-900 font-bold text-medium mb-2">Current Fish Farm Water Quality</h2>
       
       <div className="flex items-center justify-between gap-4">
         <div className={`flex-1 px-4 py-3 rounded-2xl border border-opacity-50 font-bold text-base ${waterGrade.bg} ${waterGrade.color} border-current`}>

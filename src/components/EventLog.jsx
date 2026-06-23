@@ -68,16 +68,16 @@ export default function EventLog() {
 
   return (
     <div className="bg-white rounded-[3rem] p-8 shadow-sm flex flex-col h-[300px]">
-      <h2 className="text-slate-800 font-bold text-xl mb-4">Event Log</h2>
+      <h2 className="text-slate-800 font-bold text-medium mb-2">Event Log</h2>
 
       <div ref={logContainerRef} className="flex flex-col gap-5 overflow-y-auto pr-2 custom-scrollbar">
         {logs.length > 0 ? (
           logs.map((log) => (
             <div key={log.id} className="flex flex-col">
-              <span className="text-slate-500 font-bold text-sm tracking-wide mb-1">
+              <span className="text-slate-500 font-bold text-[13px] tracking-wide ">
                 {formatTime(log.timestamp)}
               </span>
-              <span className="text-slate-500 font-medium text-[15px] leading-snug">
+              <span className="text-slate-500 font-bold text-[13px] leading-snug">
                 {log.eventLogs}
               </span>
             </div>
